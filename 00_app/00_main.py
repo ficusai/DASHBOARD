@@ -6,16 +6,11 @@ DASHBOARD – Entry point.
 Launches the GTK application and shows the main window.
 """
 
-import pathlib
-import sys
-
-sys.path.insert(0, str(pathlib.Path(__file__).parent))
-
 import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
-from _01_window import create_window
+from window import create_window
 
 
 def on_activate(app):

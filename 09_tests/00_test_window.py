@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 ficus-pro
 """Basic tests for the DASHBOARD window factory."""
 
 import sys
@@ -10,7 +11,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk
 
-from _01_window import create_window
+from window import create_window
 
 
 def test_window_creation():
