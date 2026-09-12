@@ -76,7 +76,6 @@ class TestOverlayWindow(Gtk.Window):
         self._drag_offset_x = 0
         self._drag_offset_y = 0
 
-        # Connect low-level Gdk events for drag support
         self.connect("button-press-event", self._on_button_press)
         self.connect("button-release-event", self._on_button_release)
         self.connect("motion-notify-event", self._on_motion_notify)
