@@ -14,11 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Overlay can be shown/hidden via toggle button
 
 ### Changed
-- Improved window.py toggle button tooltip to be more accurate
+- Improved window.py tooltip to be more accurate
 - Enhanced test_overlay.py with better window behavior attempts:
-  * Added GDK surface-based always-on-top attempts (modal state, ABOVE state hints)
+  * Replaced failing layer-shell ctypes approach with Gdk.ToplevelState.ABOVE
   * Implemented proper dragging using GDK surface begin_move() method
-  * Added click-to-focus support
+  * Added click-to-focus behavior
+  * Removed broken layer-shell code that caused crashes
+- Updated documentation
 
 ## [0.1.0] - 2026-09-12
 

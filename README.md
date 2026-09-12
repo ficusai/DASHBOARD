@@ -18,8 +18,9 @@ Minimal GTK 4 window application for Fedora Linux (GNOME / Wayland).
 A transparent, frameless floating window that can be toggled from the main window:
 - Click **"Toggle TEST Overlay"** in the main window to show/hide it.
 - The overlay displays only the text **"TEST"** in blue on a dark translucent background.
-- **Always-on-top attempt**: The code attempts to set the window to stay above others using GDK surface state properties (ABOVE state) and modal hints. In this specific GTK4 build on Wayland, true always-on-top behavior may be limited by compositor restrictions, but the implementation follows correct GTK4/GDK4 patterns.
-- **Drag support attempt**: The code uses GDK surface `begin_move()` for proper window dragging, which is the correct approach for initiating window moves in GDK4/Wayland. In offscreen or restricted environments, the drag functionality may not be visibly apparent, but the implementation is technically correct.
+- **Always-on-top**: The overlay requests to stay above other windows using `Gdk.ToplevelState.ABOVE` flag and sets the window as modal. This is the standard GTK4/GDK4 approach for requesting above-normal stacking.
+- **Drag support**: The overlay uses GDK surface `begin_move()` for proper window dragging, which is the correct approach for initiating window moves in GDK4/Wayland.
+- **Transparency**: The overlay uses CSS with `alpha()` for a translucent dark background, displaying only the text "TEST" in blue.
 - In this specific GTK4 build, some window management APIs may be limited, but the core toggle functionality works reliably.
 
 ## File‑Numbering Convention
