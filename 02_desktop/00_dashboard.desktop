@@ -2,7 +2,7 @@
 Type=Application
 Name=DASHBOARD
 Comment=Minimal dashboard application
-Exec=org.ficus.Dashboard
+Exec=python3 /home/ficus-pro/Documents/DASHBOARD/00_app/00_main.py
 Icon=org.ficus.Dashboard
 Terminal=false
 Categories=Utility;
