@@ -1,0 +1,20 @@
+# Build artefacts
+dist/
+build/
+*.spec
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Fedora / GNOME
+*.desktop.bak
+*.png
+!05_icons/
