@@ -7,7 +7,7 @@ Minimal GTK 4 window application for Fedora Linux (GNOME / Wayland).
 - [x] Executable from desktop
 - [x] All files in `/home/ficus-pro/Documents/DASHBOARD/`
 - [x] Git local tracking
-- [x] Toggle button + transparent TEST overlay (with attempted always-on-top and drag support)
+- [x] Toggle button + transparent TEST overlay (always-on-top on Wayland via PyQt6)
 - [ ] Publish to remote repository (later)
 - [ ] Add application icon
 - [ ] Add content / widgets (future phase)
@@ -18,14 +18,11 @@ Minimal GTK 4 window application for Fedora Linux (GNOME / Wayland).
 A transparent, frameless floating window that can be toggled from the main window:
 - Click **"Toggle TEST Overlay"** in the main window to show/hide it.
 - The overlay displays only the text **"TEST"** in blue on a dark translucent background.
-- **Always-on-top**: Uses `_NET_WM_STATE_ABOVE` via xprop for reliable stacking. This approach is needed because GNOME Shell 50.4 does not honor `Gdk.ToplevelState.ABOVE` for GTK4 windows. Run with `GDK_BACKEND=x11` environment variable for best results.
-- **Drag support**: The overlay uses GDK surface `begin_move()` for proper window dragging.
-- **Transparency**: The overlay uses CSS with `alpha()` for a translucent dark background.
+- **Always-on-top**: Uses PyQt6's `Qt.WindowStaysOnTopHint`, which works natively on Wayland. This replaces the previous xprop-based workaround that only functioned under X11. No environment variables are required.
+- **Drag support**: The overlay uses Qt mouse events (`mousePressEvent` / `mouseMoveEvent` / `mouseReleaseEvent`) for click-and-drag repositioning.
+- **Transparency**: The overlay uses Qt stylesheet `rgba()` for a translucent dark background.
 
-> **Note**: For always-on-top to work reliably, run the application with `GDK_BACKEND=x11`:
-> ```bash
-> GDK_BACKEND=x11 python3 00_app/00_main.py
-> ```
+> **Note**: GTK4 and PyQt6 coexist in the same process. Qt is initialized before GTK so `WindowStaysOnTopHint` is respected on Wayland.
 
 ## File‑Numbering Convention
 Folders and files are numbered `_00`–`_99` in **runtime / build order**:
@@ -68,13 +65,11 @@ Remote repository: `https://github.com/ficusai/DASHBOARD.git`
 |--------|-------------|--------|
 | `DASHBOARD-0.1v-linux-native` | Primary release branch for Linux native environment | Active |
 | `feature/test-overlay-toggle` | Transparent TEST overlay with toggle button | Active |
+| `feature/qt-always-on-top-overlay` | PyQt6 overlay with native Wayland always-on-top | Active |
 
 ### Branch-Related File Changes
-- `00_app/test_overlay.py`: **ENHANCED** — `TestOverlayWindow` class with improved window behavior:
-  * Added GDK surface-based always-on-top attempts (modal state, ABOVE state hints)
-  * Implemented proper dragging using GDK surface begin_move() method
-  * Added click-to-focus support
-  * Translucent dark background with rounded corners
-- `00_app/window.py`: **ENHANCED** — Updated toggle button tooltip to be more accurate about functionality
-- `CHANGELOG.md`: Added documentation of window behavior enhancements under `[Unreleased]`.
-- `README.md`: Updated Features section to accurately describe the TEST overlay capabilities and limitations in this specific GTK4 build.
+- `00_app/test_overlay.py`: **REWRITTEN** — Replaced GTK4 window with PyQt6 `QWidget` using `Qt.WindowStaysOnTopHint` for native Wayland always-on-top; extracted pattern from PROGRESS /floating_overlay_card.py; added drag support via Qt mouse events; added `show_overlay()` / `hide_overlay()` / `is_overlay_visible()` module-level API.
+- `00_app/00_main.py`: **ENHANCED** — Initializes PyQt6 `QApplication` before GTK; adds `GLib.timeout_add(50, _pump_qt_events)` to keep Qt event loop running alongside GTK; connects GTK "shutdown" signal to `qt_app.quit()`.
+- `00_app/window.py`: **SIMPLIFIED** — Removed GTK-specific `TestOverlayWindow` import; now calls `test_overlay.show_overlay()` / `test_overlay.hide_overlay()` / `test_overlay.is_overlay_visible()`; updated tooltip to reflect Wayland-native behavior.
+- `09_tests/test_overlay_qt.py`: **NEW** — Verifies module API (`show_overlay`, `hide_overlay`, `is_overlay_visible`), `TestOverlayWindow` class existence, and correct Qt window flags (`WindowStaysOnTopHint`, `FramelessWindowHint`, `Tool`, `Window`).
+- `README.md`: Updated Features section to document PyQt6-based always-on-top; removed `GDK_BACKEND=x11` requirement note.

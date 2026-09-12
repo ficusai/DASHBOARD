@@ -12,16 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Toggle button in main window to show/hide the TEST overlay
 - Overlay is translucent and frameless
 - Overlay can be shown/hidden via toggle button
+- PyQt6-based overlay with native Wayland always-on-top support
+- Drag support via Qt mouse events
+- `show_overlay()` / `hide_overlay()` / `is_overlay_visible()` module API
+- Qt event pump (`GLib.timeout_add`) for GTK+PyQt6 coexistence
+- `09_tests/test_overlay_qt.py` — flag verification test
 
 ### Changed
-- Improved window.py tooltip to be more accurate
-- Enhanced test_overlay.py with xprop-based always-on-top:
-  * Added `_set_window_above()` function using xprop to set _NET_WM_STATE_ABOVE
-  * This is needed because GNOME Shell 50.4 does not honor Gdk.ToplevelState.ABOVE
-  * Run with GDK_BACKEND=x11 for best results (similar to PROGRESS's QT_QPA_PLATFORM=xcb)
-  * Implemented proper dragging using GDK surface begin_move() method
-  * Added click-to-focus behavior
-- Updated documentation
+- Replaced GTK4 `Gdk.ToplevelState.ABOVE` + xprop approach with PyQt6 `Qt.WindowStaysOnTopHint` (works natively on Wayland, no `GDK_BACKEND=x11` needed)
+- GTK and PyQt6 now coexist in the same process; Qt is initialized before GTK
+- Simplified `window.py` toggle logic to use module-level overlay API
+- Updated tooltip and documentation to reflect Wayland-native behavior
 
 ## [0.1.0] - 2026-09-12
 

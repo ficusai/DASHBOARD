@@ -1,192 +1,161 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 ficus-pro
 """
-DASHBOARD – Transparent TEST overlay window.
+DASHBOARD – Transparent TEST overlay window (PyQt6).
 
-Creates a small translucent overlay showing only the text "TEST".
-The overlay stays above other windows using _NET_WM_STATE_ABOVE
-and can be dragged by clicking and dragging.
+Extracted from PROGRESS /floating_overlay_card.py pattern.
+Uses PyQt6 Qt.WindowStaysOnTopHint which works natively on Wayland,
+unlike GTK4's Gdk.ToplevelState.ABOVE (ignored by GNOME Shell on Wayland).
+
+The overlay is a top-level QWidget created by show_overlay() and toggled
+by the main window's button via show_overlay() / hide_overlay().
+Qt events are pumped by the main GTK event loop via GLib.timeout_add().
 """
 
 import os
-import subprocess
-import time
+from typing import Optional
 
-import gi
-gi.require_version("Gtk", "4.0")
-gi.require_version("Gdk", "4.0")
-from gi.repository import Gtk, Gdk, GLib
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
+from PyQt6.QtGui import QFont
 
 
-def _set_window_above(window_title: str) -> bool:
+# Overlay reference managed by show_overlay() / hide_overlay().
+_overlay: Optional["QApplication"] = None
+
+
+def _get_qt_app() -> QApplication:
+    """Return the global QApplication instance, creating it if needed."""
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+    return app
+
+
+def _ensure_overlay_exists() -> Optional[QWidget]:
+    """Return the existing overlay widget or None if it hasn't been created yet."""
+    import test_overlay as _mod
+    return getattr(_mod, "_widget", None)
+
+
+class TestOverlayWindow(QWidget):
     """
-    Set a window to stay above others using xprop.
+    A translucent, frameless overlay showing the text "TEST".
 
-    This is needed because GNOME Shell 50.4 on Wayland does not
-    honor Gdk.ToplevelState.ABOVE for GTK4 windows. Using the X11
-    _NET_WM_STATE_ABOVE property via xprop is more reliable when
-    running with GDK_BACKEND=x11.
+    Uses Qt.WindowStaysOnTopHint so it stays above all other windows,
+    including on Wayland where GTK4's Gdk.ToplevelState.ABOVE is ignored
+    by GNOME Shell 50.4.
 
-    Returns:
-        True if the window was found and its state was updated.
-    """
-    result = subprocess.run(
-        ["xprop", "-root", "_NET_CLIENT_LIST"],
-        capture_output=True,
-        text=True,
-    )
-    for line in result.stdout.strip().split():
-        if not line.startswith("0x"):
-            continue
-        win_id = line
-        result2 = subprocess.run(
-            ["xprop", "-id", win_id, "_NET_WM_NAME"],
-            capture_output=True,
-            text=True,
-        )
-        if window_title not in result2.stdout:
-            continue
-
-        # Set _NET_WM_STATE_ABOVE using xprop
-        result3 = subprocess.run(
-            [
-                "xprop",
-                "-id",
-                win_id,
-                "-f",
-                "_NET_WM_STATE",
-                "32a",
-                "-set",
-                "_NET_WM_STATE",
-                "_NET_WM_STATE_ABOVE",
-            ],
-            capture_output=True,
-            text=True,
-        )
-        return result3.returncode == 0
-
-    return False
-
-
-class TestOverlayWindow(Gtk.Window):
-    """
-    A translucent overlay showing only "TEST".
-    Uses _NET_WM_STATE_ABOVE to stay above other windows
-    and Gtk.GestureDrag for proper dragging.
+    Supports click-and-drag repositioning.
     """
 
     def __init__(self) -> None:
         super().__init__()
-        self.set_title("TEST Overlay")
-        self.set_decorated(False)
-        self.set_resizable(False)
-        self.set_size_request(140, 60)
 
-        # Translucent dark background via CSS
-        provider = Gtk.CssProvider()
-        provider.load_from_data(
-            b"""
-            .test-overlay-box {
-                background-color: alpha(#0f172a, 0.7);
-                border-radius: 8px;
+        self._custom_position = False
+        self._is_dragging = False
+        self._drag_offset = None
+
+        # Always-on-top, frameless, tool-window (no taskbar entry)
+        self.setWindowFlags(
+            Qt.WindowType.Window
+            | Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.Tool
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setFixedSize(140, 60)
+        self.setCursor(Qt.CursorShape.SizeAllCursor)
+
+        # Translucent dark background + blue TEST label
+        self.setStyleSheet("""
+            TestOverlayWindow {
+                background-color: rgba(15, 23, 42, 180);
             }
-            .test-label {
+            QLabel {
+                color: #60a5fa;
                 font-size: 28px;
                 font-weight: bold;
-                color: #60a5fa;
+                font-family: 'Segoe UI', Ubuntu, sans-serif;
             }
-            """
+        """)
+
+        label = QLabel("TEST", self)
+        label.setAlignment(
+            Qt.AlignmentFlag.AlignCenter
         )
-        Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(), provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
-
-        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        box.add_css_class("test-overlay-box")
-        box.set_halign(Gtk.Align.CENTER)
-        box.set_valign(Gtk.Align.CENTER)
-
-        label = Gtk.Label(label="TEST")
-        label.add_css_class("test-label")
-        label.set_halign(Gtk.Align.CENTER)
-        label.set_valign(Gtk.Align.CENTER)
-        box.append(label)
-
-        self.set_child(box)
-
-        # Make window stay above others
-        self._setup_always_on_top()
-
-        # Add drag support via Gtk.GestureDrag
-        self._setup_drag_support()
-
-    def _setup_always_on_top(self) -> None:
-        """Configure window to stay above other windows."""
-        # Set the ABOVE state flag on the window
-        self.set_state_flags(Gdk.ToplevelState.ABOVE)
-
-        # Also set as modal to help with stacking
-        try:
-            native = self.get_native()
-            if native and hasattr(native, "get_surface"):
-                surface = native.get_surface()
-                if surface:
-                    surface.set_modal(True)
-        except Exception:
-            pass
-
-        # Use xprop to set _NET_WM_STATE_ABOVE for better compatibility
-        # with GNOME Shell 50.4
-        def _deferred_set_above() -> bool:
-            time.sleep(0.5)
-            _set_window_above(self.get_title())
-            return False  # Run only once
-
-        GLib.idle_add(_deferred_set_above)
-
-    def _setup_drag_support(self) -> None:
-        """Add drag support for moving the window."""
-        drag = Gtk.GestureDrag()
-        drag.connect("drag-begin", self._on_drag_begin)
-        drag.connect("drag-update", self._on_drag_update)
-        drag.connect("drag-end", self._on_drag_end)
-        self.add_controller(drag)
-
-        click = Gtk.GestureClick()
-        click.connect("pressed", self._on_click_pressed)
-        self.add_controller(click)
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(label)
 
     # ------------------------------------------------------------------ #
-    #  Event Handlers                                                      #
+    #  Drag support                                                        #
     # ------------------------------------------------------------------ #
 
-    def _on_drag_begin(self, gesture: Gtk.GestureDrag, x: float, y: float) -> None:
-        """Start interactive window move using GDK surface begin_move."""
-        try:
-            native = self.get_native()
-            if native and hasattr(native, "get_surface"):
-                surface = native.get_surface()
-                if surface:
-                    display = Gdk.Display.get_default()
-                    if display:
-                        seat = display.get_default_seat()
-                        if seat:
-                            pointer = seat.get_pointer()
-                            if pointer:
-                                timestamp = int(Gdk.CURRENT_TIME)
-                                surface.begin_move(pointer, 1, x, y, timestamp)
-        except Exception:
-            pass
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._custom_position = True
+            self._is_dragging = True
+            self._drag_offset = event.globalPosition().toPoint() - self.pos()
+            event.accept()
 
-    def _on_drag_update(self, gesture: Gtk.GestureDrag, x: float, y: float) -> None:
-        """Drag updates are handled by begin_move."""
-        pass
+    def mouseMoveEvent(self, event) -> None:
+        if self._is_dragging and self._drag_offset is not None:
+            if event.buttons() & Qt.MouseButton.LeftButton:
+                self.move(event.globalPosition().toPoint() - self._drag_offset)
+                event.accept()
+                return
+        super().mouseMoveEvent(event)
 
-    def _on_drag_end(self, gesture: Gtk.GestureDrag, x: float, y: float) -> None:
-        """Clean up after drag ends."""
-        pass
+    def mouseReleaseEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._is_dragging = False
+            self._drag_offset = None
+            event.accept()
 
-    def _on_click_pressed(self, gesture: Gtk.GestureClick, n_press: int, x: float, y: float) -> None:
-        """Ensure window gets focus when clicked."""
-        self.present()
+    # ------------------------------------------------------------------ #
+    #  Positioning                                                         #
+    # ------------------------------------------------------------------ #
+
+    def position_default(self) -> None:
+        """Place the overlay at the top-left of the primary screen."""
+        screen = QApplication.primaryScreen().availableGeometry()
+        w, h = self.width(), self.height()
+        margin = 24
+        self.move(margin, margin + h)
+
+
+def show_overlay() -> None:
+    """Create and show the TEST overlay if it isn't already visible."""
+    global _overlay
+    qt_app = _get_qt_app()
+
+    if _overlay is None:
+        _overlay = TestOverlayWindow()
+        _overlay.position_default()
+        import test_overlay as _mod
+        _mod._widget = _overlay
+
+    _overlay.show()
+    _overlay.raise_()
+    _overlay.activateWindow()
+
+
+def hide_overlay() -> None:
+    """Hide the TEST overlay without destroying it."""
+    global _overlay
+    w = _get_widget()
+    if w is not None:
+        w.hide()
+
+
+def is_overlay_visible() -> bool:
+    """Return True if the overlay is currently visible."""
+    w = _get_widget()
+    return w is not None and w.isVisible()
+
+
+def _get_widget() -> Optional[QWidget]:
+    """Retrieve the current overlay widget instance."""
+    import test_overlay as _mod
+    return getattr(_mod, "_widget", None)
