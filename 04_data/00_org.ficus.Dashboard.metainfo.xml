@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.ficus.Dashboard</id>
+  <name>DASHBOARD</name>
+  <summary>Minimal dashboard application for Fedora Linux</summary>
+  <metadata_license>CC-BY-4.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <description>
+    <p>
+      DASHBOARD is a lightweight GTK4 application built with Python and PyGObject.
+      It provides a clean, minimal window for future dashboard functionality.
+    </p>
+  </description>
+  <launchable type="desktop-id">org.ficus.Dashboard.desktop</launchable>
+  <url type="homepage">https://github.com/ficusai/DASHBOARD</url>
+  <url type="bugtracker">https://github.com/ficusai/DASHBOARD/issues</url>
+  <url type="vcs-browser">https://github.com/ficusai/DASHBOARD</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>The main window of DASHBOARD</caption>
+      <image>https://raw.githubusercontent.com/ficusai/DASHBOARD/main/04_data/screenshot.png</image>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="0.1.0" date="2026-09-12">
+      <description>
+        <p>Initial release: minimal GTK4 window with close button.</p>
+      </description>
+    </release>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>

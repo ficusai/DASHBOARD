@@ -1,0 +1,7 @@
+# Fedora system packages (installed via dnf, not pip):
+#   python3-gobject
+#   gtk4
+#   python3-gobject-devel   (optional, for development)
+#
+# Python packages for packaging:
+pyinstaller

@@ -1,0 +1,26 @@
+app-id: org.ficus.Dashboard
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: dashboard
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=xdg-documents/DASHBOARD
+
+modules:
+  - name: dashboard
+    buildsystem: simple
+    build-commands:
+      - pip3 install --prefix=/app .
+      - install -Dm644 04_data/00_org.ficus.Dashboard.metainfo.xml
+        /app/share/metainfo/org.ficus.Dashboard.metainfo.xml
+      - install -Dm644 04_data/01_org.ficus.Dashboard.desktop
+        /app/share/applications/org.ficus.Dashboard.desktop
+      - cp -r 05_icons/hicolor/* /app/share/icons/hicolor/
+    sources:
+      - type: dir
+        path: ..
