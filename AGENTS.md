@@ -8,7 +8,7 @@
 | **Branch** | `DASHBOARD-0.1v-linux-native` |
 | **Remote** | `https://github.com/ficusai/DASHBOARD.git` |
 | **License** | GPL-3.0-or-later |
-| **Stack** | Python 3.11+, PyGObject, GTK4, PyInstaller, Flatpak |
+| **Stack** | Python 3.11+, PyGObject, GTK4, PyQt6, PyInstaller, Flatpak |
 | **Entry Point** | `00_app/00_main.py` |
 
 ---
@@ -69,7 +69,7 @@ All files are numbered `_00`–`_99` reflecting **runtime and build sequence**:
   # SPDX-License-Identifier: GPL-3.0-or-later
   # Copyright (C) 2026 ficus-pro
   ```
-- **GTK4 / PyGObject only** — no Tkinter, no PyQt, no PySide.
+- **Primary toolkit: GTK4 / PyGObject.** PyQt6 is permitted for overlay functionality where GTK cannot provide native Wayland always-on-top behavior.
 - **Type hints** required on all function signatures.
 - **PEP 8** — follow standard Python formatting.
 - **Numeric module names** (`00_main.py`, `01_window.py`) — use `importlib.import_module()` in tests, never `from _00_main import ...`.
@@ -84,10 +84,12 @@ All files are numbered `_00`–`_99` reflecting **runtime and build sequence**:
 python3 00_app/00_main.py
 
 # Run tests
-QT_QPA_PLATFORM=offscreen PYTHONPATH=00_app pytest 09_tests/ -v
+# Use Xvfb for headless GTK testing:
+#   Xvfb :99 -screen 0 1024x768x24 &
+#   DISPLAY=:99 QT_QPA_PLATFORM=offscreen GDK_BACKEND=x11 PYTHONPATH=00_app pytest 09_tests/ -v
 
 # Compile / syntax check
-python3 -m py_compile 00_app/**/*.py
+python3 -m py_compile $(find 00_app -name '*.py' -not -path '*__pycache__*')
 
 # Build standalone executable
 bash 01_build/01_build_executable.sh
@@ -137,6 +139,6 @@ git push origin DASHBOARD-0.1v-linux-native
 ## Current State
 
 - Version: `0.2.0`
-- Status: GTK4 overlay with xprop-based always-on-top (requires GDK_BACKEND=x11)
+- Status: GTK4 main window with PyQt6 TEST overlay (native Wayland always-on-top via Qt.WindowStaysOnTopHint)
 - Remote: https://github.com/ficusai/DASHBOARD.git
-- Tests: 2 passing (`test_window_creation`, `test_main_module_exists`)
+- Tests: 5 passing (all `09_tests/` pass with `QT_QPA_PLATFORM=offscreen GDK_BACKEND=offscreen`)

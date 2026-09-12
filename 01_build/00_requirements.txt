@@ -5,3 +5,4 @@
 #
 # Python packages for packaging:
 pyinstaller
+PyQt6>=6.5

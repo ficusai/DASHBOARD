@@ -18,11 +18,11 @@ Minimal GTK 4 window application for Fedora Linux (GNOME / Wayland).
 A transparent, frameless floating window that can be toggled from the main window:
 - Click **"Toggle TEST Overlay"** in the main window to show/hide it.
 - The overlay displays only the text **"TEST"** in blue on a dark translucent background.
-- **Always-on-top**: Uses PyQt6's `Qt.WindowStaysOnTopHint`, which works natively on Wayland. This replaces the previous xprop-based workaround that only functioned under X11. No environment variables are required.
+- **Always-on-top**: Uses PyQt6's `Qt.WindowStaysOnTopHint`, which works natively on Wayland. The overlay runs as a separate process (`qt_overlay.py`) to avoid GTK/Qt GType conflicts, communicating via a Unix domain socket. No environment variables are required.
 - **Drag support**: The overlay uses Qt mouse events (`mousePressEvent` / `mouseMoveEvent` / `mouseReleaseEvent`) for click-and-drag repositioning.
 - **Transparency**: The overlay uses Qt stylesheet `rgba()` for a translucent dark background.
 
-> **Note**: GTK4 and PyQt6 coexist in the same process. Qt is initialized before GTK so `WindowStaysOnTopHint` is respected on Wayland.
+> **Architecture note**: The overlay is a standalone PyQt6 process. The main GTK app launches it via `subprocess` and controls it through a Unix domain socket (`~/.local/share/dashboard-overlay.sock`). This avoids GTK/Qt coexistence issues on Wayland.
 
 ## File‑Numbering Convention
 Folders and files are numbered `_00`–`_99` in **runtime / build order**:
@@ -65,11 +65,13 @@ Remote repository: `https://github.com/ficusai/DASHBOARD.git`
 |--------|-------------|--------|
 | `DASHBOARD-0.1v-linux-native` | Primary release branch for Linux native environment | Active |
 | `feature/test-overlay-toggle` | Transparent TEST overlay with toggle button | Active |
-| `feature/qt-always-on-top-overlay` | PyQt6 overlay with native Wayland always-on-top | Active |
+| `feature/qt-always-on-top-overlay` | PyQt6 overlay with native Wayland always-on-top (separate process) | Active |
 
 ### Branch-Related File Changes
-- `00_app/test_overlay.py`: **REWRITTEN** — Replaced GTK4 window with PyQt6 `QWidget` using `Qt.WindowStaysOnTopHint` for native Wayland always-on-top; extracted pattern from PROGRESS /floating_overlay_card.py; added drag support via Qt mouse events; added `show_overlay()` / `hide_overlay()` / `is_overlay_visible()` module-level API.
-- `00_app/00_main.py`: **ENHANCED** — Initializes PyQt6 `QApplication` before GTK; adds `GLib.timeout_add(50, _pump_qt_events)` to keep Qt event loop running alongside GTK; connects GTK "shutdown" signal to `qt_app.quit()`.
-- `00_app/window.py`: **SIMPLIFIED** — Removed GTK-specific `TestOverlayWindow` import; now calls `test_overlay.show_overlay()` / `test_overlay.hide_overlay()` / `test_overlay.is_overlay_visible()`; updated tooltip to reflect Wayland-native behavior.
-- `09_tests/test_overlay_qt.py`: **NEW** — Verifies module API (`show_overlay`, `hide_overlay`, `is_overlay_visible`), `TestOverlayWindow` class existence, and correct Qt window flags (`WindowStaysOnTopHint`, `FramelessWindowHint`, `Tool`, `Window`).
-- `README.md`: Updated Features section to document PyQt6-based always-on-top; removed `GDK_BACKEND=x11` requirement note.
+- `00_app/qt_overlay.py`: **NEW** — Standalone PyQt6 overlay daemon with Unix socket IPC; supports `--show`, `--hide`, `--toggle`, `--visible`; singleton pattern prevents multiple instances.
+- `00_app/test_overlay.py`: **REWRITTEN** — Subprocess-based overlay management; launches `qt_overlay.py` and communicates via its CLI flags; exposes `show_overlay()`, `hide_overlay()`, `toggle_overlay()`, `is_overlay_visible()`.
+- `00_app/00_main.py`: **SIMPLIFIED** — Pure GTK4 entry point; no Qt dependencies; clean shutdown.
+- `00_app/window.py`: **UPDATED** — Toggle logic now calls `test_overlay.show_overlay()` / `hide_overlay()` / `is_overlay_visible()`.
+- `09_tests/test_overlay_qt.py`: **UPDATED** — Tests module API, script existence, and Qt window flags.
+- `README.md`: Updated Features and Architecture sections.
+- `CHANGELOG.md`: Documented separate-process architecture.

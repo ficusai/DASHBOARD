@@ -27,8 +27,11 @@ jobs:
             python3-gi python3-gi-cairo gir1.2-gtk-4.0 \
             libgirepository1.0-dev libcairo2-dev
 
-      - name: Install PyInstaller
-        run: pip install pyinstaller
+      - name: Install Python dependencies
+        run: pip install pyinstaller PyQt6
+
+      - name: Run tests
+        run: DISPLAY=:99 QT_QPA_PLATFORM=offscreen GDK_BACKEND=x11 PYTHONPATH=00_app pytest 09_tests/ -v
 
       - name: Build executable
         run: |
