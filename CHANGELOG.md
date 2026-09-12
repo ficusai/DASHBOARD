@@ -15,11 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 - Improved window.py tooltip to be more accurate
-- Enhanced test_overlay.py with better window behavior attempts:
-  * Replaced failing layer-shell ctypes approach with Gdk.ToplevelState.ABOVE
+- Enhanced test_overlay.py with xprop-based always-on-top:
+  * Added `_set_window_above()` function using xprop to set _NET_WM_STATE_ABOVE
+  * This is needed because GNOME Shell 50.4 does not honor Gdk.ToplevelState.ABOVE
+  * Run with GDK_BACKEND=x11 for best results (similar to PROGRESS's QT_QPA_PLATFORM=xcb)
   * Implemented proper dragging using GDK surface begin_move() method
   * Added click-to-focus behavior
-  * Removed broken layer-shell code that caused crashes
 - Updated documentation
 
 ## [0.1.0] - 2026-09-12

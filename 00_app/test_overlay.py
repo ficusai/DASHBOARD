@@ -4,20 +4,74 @@
 DASHBOARD – Transparent TEST overlay window.
 
 Creates a small translucent overlay showing only the text "TEST".
-The overlay stays above other windows using Gdk.ToplevelState.ABOVE
+The overlay stays above other windows using _NET_WM_STATE_ABOVE
 and can be dragged by clicking and dragging.
 """
+
+import os
+import subprocess
+import time
 
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, Gdk, GLib
+
+
+def _set_window_above(window_title: str) -> bool:
+    """
+    Set a window to stay above others using xprop.
+
+    This is needed because GNOME Shell 50.4 on Wayland does not
+    honor Gdk.ToplevelState.ABOVE for GTK4 windows. Using the X11
+    _NET_WM_STATE_ABOVE property via xprop is more reliable when
+    running with GDK_BACKEND=x11.
+
+    Returns:
+        True if the window was found and its state was updated.
+    """
+    result = subprocess.run(
+        ["xprop", "-root", "_NET_CLIENT_LIST"],
+        capture_output=True,
+        text=True,
+    )
+    for line in result.stdout.strip().split():
+        if not line.startswith("0x"):
+            continue
+        win_id = line
+        result2 = subprocess.run(
+            ["xprop", "-id", win_id, "_NET_WM_NAME"],
+            capture_output=True,
+            text=True,
+        )
+        if window_title not in result2.stdout:
+            continue
+
+        # Set _NET_WM_STATE_ABOVE using xprop
+        result3 = subprocess.run(
+            [
+                "xprop",
+                "-id",
+                win_id,
+                "-f",
+                "_NET_WM_STATE",
+                "32a",
+                "-set",
+                "_NET_WM_STATE",
+                "_NET_WM_STATE_ABOVE",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        return result3.returncode == 0
+
+    return False
 
 
 class TestOverlayWindow(Gtk.Window):
     """
     A translucent overlay showing only "TEST".
-    Uses Gdk.ToplevelState.ABOVE to stay above other windows
+    Uses _NET_WM_STATE_ABOVE to stay above other windows
     and Gtk.GestureDrag for proper dragging.
     """
 
@@ -61,7 +115,7 @@ class TestOverlayWindow(Gtk.Window):
 
         self.set_child(box)
 
-        # Make window stay above others using GDK toplevel state
+        # Make window stay above others
         self._setup_always_on_top()
 
         # Add drag support via Gtk.GestureDrag
@@ -70,18 +124,26 @@ class TestOverlayWindow(Gtk.Window):
     def _setup_always_on_top(self) -> None:
         """Configure window to stay above other windows."""
         # Set the ABOVE state flag on the window
-        # This requests the compositor to keep the window above others
         self.set_state_flags(Gdk.ToplevelState.ABOVE)
 
         # Also set as modal to help with stacking
         try:
             native = self.get_native()
-            if native and hasattr(native, 'get_surface'):
+            if native and hasattr(native, "get_surface"):
                 surface = native.get_surface()
                 if surface:
                     surface.set_modal(True)
         except Exception:
             pass
+
+        # Use xprop to set _NET_WM_STATE_ABOVE for better compatibility
+        # with GNOME Shell 50.4
+        def _deferred_set_above() -> bool:
+            time.sleep(0.5)
+            _set_window_above(self.get_title())
+            return False  # Run only once
+
+        GLib.idle_add(_deferred_set_above)
 
     def _setup_drag_support(self) -> None:
         """Add drag support for moving the window."""
@@ -103,7 +165,7 @@ class TestOverlayWindow(Gtk.Window):
         """Start interactive window move using GDK surface begin_move."""
         try:
             native = self.get_native()
-            if native and hasattr(native, 'get_surface'):
+            if native and hasattr(native, "get_surface"):
                 surface = native.get_surface()
                 if surface:
                     display = Gdk.Display.get_default()
