@@ -38,12 +38,19 @@ def _send_command(cmd: str) -> str | None:
     try:
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.settimeout(2.0)
-        sock.connect(str(SOCKET_PATH))
+        try:
+            sock.connect(str(SOCKET_PATH))
+        except ConnectionRefusedError:
+            return None
         sock.sendall((cmd + "\n").encode())
-        data = sock.recv(4096)
-        sock.close()
-        return data.decode().strip()
-    except (ConnectionRefusedError, FileNotFoundError, OSError):
+        try:
+            data = sock.recv(4096)
+            return data.decode().strip()
+        except socket.timeout:
+            return None
+        finally:
+            sock.close()
+    except (FileNotFoundError, OSError):
         return None
 
 
