@@ -51,3 +51,22 @@ Folders and files are numbered `_00`–`_99` in **runtime / build order**:
 - [ ] Add unit tests under `09_tests/`
 - [ ] Create RPM package with `fpm` or `fbs`
 - [ ] Publish to GitHub / GitLab
+
+---
+
+## Git & Release Branching
+
+Primary release branch: `DASHBOARD-0.1v-linux-native`
+Remote repository: `https://github.com/ficusai/DASHBOARD.git`
+
+### Branch Map
+| Branch | Description | Status |
+|--------|-------------|--------|
+| `DASHBOARD-0.1v-linux-native` | Primary release branch for Linux native environment | Active |
+| `feature/test-overlay-toggle` | Transparent always-on-top TEST overlay with toggle button | Active |
+
+### Branch-Related File Changes
+- `00_app/test_overlay.py`: **NEW** — `TestOverlayWindow` class. A GTK4 window with a translucent dark background, always-on-top flag, utility-type hint, and drag support. Displays only the text "TEST".
+- `00_app/window.py`: Added a "Toggle TEST Overlay" button that creates/shows/hides the `TestOverlayWindow`. Button label updates to reflect current overlay state.
+- `CHANGELOG.md`: Documented the new overlay feature under `[Unreleased]`.
+- `README.md`: Added Features section describing the TEST overlay behaviour, updated goal checklist.
