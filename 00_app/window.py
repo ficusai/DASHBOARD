@@ -11,7 +11,6 @@ from gi.repository import Gtk
 
 from test_overlay import TestOverlayWindow
 
-
 # Module-level reference so the click handler can access the overlay
 # without walking the widget tree.
 _overlay: TestOverlayWindow | None = None
@@ -20,8 +19,8 @@ _overlay: TestOverlayWindow | None = None
 def create_window(app: Gtk.Application) -> Gtk.ApplicationWindow:
     """
     Return a Gtk.ApplicationWindow with a "Toggle TEST Overlay" button.
-    Clicking the button creates (or hides) a transparent, always-on-top
-    overlay that shows only the text "TEST".
+    Clicking the button creates (or hides) a translucent overlay window
+    displaying only the text "TEST".
     """
     win = Gtk.ApplicationWindow(application=app)
     win.set_title("DASHBOARD")
@@ -38,8 +37,8 @@ def create_window(app: Gtk.Application) -> Gtk.ApplicationWindow:
 
     overlay_btn = Gtk.Button(label="Toggle TEST Overlay")
     overlay_btn.set_tooltip_text(
-        "Show or hide a transparent, always-on-top overlay window displaying 'TEST'.\n"
-        "The overlay can be dragged anywhere on the screen."
+        "Show or hide a transparent overlay window displaying 'TEST'.\n"
+        "In this build, the overlay appears at the top-left by default."
     )
     overlay_btn.connect("clicked", _on_toggle_clicked)
     box.append(overlay_btn)
@@ -54,36 +53,22 @@ def _on_toggle_clicked(btn: Gtk.Button) -> None:
     global _overlay
 
     if _overlay is None:
+        # Create the overlay (will appear at top-left by default in this GTK4 build)
         overlay = TestOverlayWindow()
-        # Position near top-right of the primary screen
-        monitor = _get_primary_monitor()
-        if monitor:
-            rect = monitor.get_geometry()
-            overlay.move(rect.x + rect.width - 200, rect.y + 80)
-        else:
-            overlay.move(800, 100)
         overlay.show()
         _overlay = overlay
     else:
-        _overlay.hide()
-        _overlay = None
+        if _overlay.get_visible():
+            _overlay.hide()
+        else:
+            _overlay.show()
 
     _refresh_button_label(btn)
 
 
-def _get_primary_monitor() -> Gtk.Monitor | None:
-    """Return the primary GdkMonitor if available."""
-    display = Gtk.Display.get_default()
-    if display is None:
-        return None
-    n_monitors = display.get_n_monitors()
-    if n_monitors > 0:
-        return display.get_monitor(0)
-    return None
-
-
 def _refresh_button_label(btn: Gtk.Button) -> None:
-    """Update the button label to reflect current overlay state."""
+    """Update the button label to reflect overlay visibility."""
+    global _overlay
     if _overlay is not None and _overlay.get_visible():
         btn.set_label("Hide TEST Overlay")
     else:

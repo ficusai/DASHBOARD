@@ -137,6 +137,6 @@ git push origin DASHBOARD-0.1v-linux-native
 ## Current State
 
 - Version: `0.1.0`
-- Status: Minimal empty window with system close button
-- Remote: Not yet published (repository must be created on GitHub first)
+- Status: Minimal GTK4 window with toggle button for translucent TEST overlay
+- Remote: https://github.com/ficusai/DASHBOARD.git
 - Tests: 2 passing (`test_window_creation`, `test_main_module_exists`)
