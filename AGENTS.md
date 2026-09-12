@@ -136,7 +136,7 @@ git push origin DASHBOARD-0.1v-linux-native
 
 ## Current State
 
-- Version: `0.1.0`
-- Status: Minimal GTK4 window with toggle button for translucent TEST overlay
+- Version: `0.2.0`
+- Status: GTK4 overlay with xprop-based always-on-top (requires GDK_BACKEND=x11)
 - Remote: https://github.com/ficusai/DASHBOARD.git
 - Tests: 2 passing (`test_window_creation`, `test_main_module_exists`)
