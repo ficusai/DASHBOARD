@@ -18,16 +18,31 @@ _OVERLAY_SCRIPT = Path(__file__).with_name("qt_overlay.py")
 
 
 def _run_overlay(args: list[str]) -> str | None:
-    """Launch qt_overlay.py with the given flags and return stdout."""
+    """Launch qt_overlay.py and return stdout if it exits quickly.
+
+    Commands that query state (e.g. --visible) exit immediately and
+    their output is returned.  Commands that may start the daemon
+    (e.g. --show, --toggle) are launched fire-and-forget; None is
+    returned so the caller checks state via --visible instead.
+    """
     try:
-        result = subprocess.run(
+        proc = subprocess.Popen(
             [sys.executable, str(_OVERLAY_SCRIPT)] + args,
-            capture_output=True,
-            text=True,
-            timeout=5,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
-        return result.stdout.strip() or None
-    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        # Only wait for short-running commands (queries).
+        # Daemon-starting commands run indefinitely and must not be waited on.
+        if args in (["--visible"],):
+            try:
+                stdout, _stderr = proc.communicate(timeout=5)
+                return (stdout or b"").decode().strip() or None
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                return None
+        # For other commands just launch and forget.
+        return None
+    except (FileNotFoundError, OSError):
         return None
 
 
@@ -48,8 +63,11 @@ def toggle_overlay() -> bool:
     Returns:
         True if the overlay is now visible, False otherwise.
     """
-    resp = _run_overlay(["--toggle"])
-    return resp == "shown"
+    _run_overlay(["--toggle"])
+    # Give the daemon a moment to start, then query state.
+    import time
+    time.sleep(0.3)
+    return is_overlay_visible()
 
 
 def is_overlay_visible() -> bool:

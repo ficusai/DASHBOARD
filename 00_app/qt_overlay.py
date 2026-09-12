@@ -193,26 +193,23 @@ def main() -> int:
     group.add_argument("--visible", action="store_true", help="Print true/false to stdout")
     args = parser.parse_args()
 
-    # If no arguments, start the daemon
-    if not any([args.show, args.hide, args.toggle, args.visible]):
-        overlay = OverlayApp()
-        return overlay.run()
-
-    # Try to communicate with existing instance
-    cmd = "show" if args.show else "hide" if args.hide else "toggle" if args.toggle else "visible"
-    resp = _send_command(cmd)
-    if resp is not None:
-        if args.visible:
-            print(resp)
+    # Query-only: never start a daemon, just report current state.
+    if args.visible:
+        resp = _send_command("visible")
+        print(resp if resp is not None else "false")
         return 0
 
-    # No running instance — start one and apply the command
+    # Action commands: try existing instance first, fall back to starting one.
+    cmd = "show" if args.show else "hide" if args.hide else "toggle"
+    resp = _send_command(cmd)
+    if resp is not None:
+        print(resp)
+        return 0
+
+    # No running instance — start the daemon and apply the command.
     overlay = OverlayApp()
     response = overlay.handle_command(cmd)
-    if args.visible:
-        print("true" if response == "shown" else "false")
-    else:
-        print(response)
+    print(response)
     return overlay.run()
 
 
