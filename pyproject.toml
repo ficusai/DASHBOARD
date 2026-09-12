@@ -12,13 +12,14 @@ license = { text = "GPL-3.0-or-later" }
 requires-python = ">=3.10"
 dependencies = [
     "PyGObject>=3.44",
+    "PyQt6>=6.5",
 ]
 
 [project.scripts]
-dashboard = "dashboard.main:main"
+dashboard = "00_app.00_main:main"
 
-[tool.setuptools.packages.find]
-where = ["00_app"]
+[tool.setuptools]
+py-modules = ["00_app.00_main", "00_app.window", "00_app.test_overlay", "00_app.qt_overlay", "00_app.quit"]
 
 [tool.pytest.ini_options]
 testpaths = ["09_tests"]

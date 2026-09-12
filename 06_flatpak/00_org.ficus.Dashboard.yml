@@ -2,6 +2,8 @@ app-id: org.ficus.Dashboard
 runtime: org.gnome.Platform
 runtime-version: '50'
 sdk: org.gnome.Sdk
+  extensions:
+    org.freedesktop.Platform.html5-client
 command: dashboard
 
 finish-args:

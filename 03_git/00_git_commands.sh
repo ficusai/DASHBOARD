@@ -25,6 +25,12 @@ venv/
 
 # Fedora / GNOME
 *.desktop.bak
+*.png
+!05_icons/
+
+# Runtime data
+04_data/ram_data.db
+04_data/plugins/
 EOF
 
 git add .

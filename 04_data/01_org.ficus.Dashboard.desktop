@@ -2,7 +2,7 @@
 Type=Application
 Name=DASHBOARD
 Comment=Minimal dashboard application
-Exec=org.ficus.Dashboard
+Exec=dashboard
 Icon=org.ficus.Dashboard
 Terminal=false
 Categories=Utility;

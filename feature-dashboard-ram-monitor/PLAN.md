@@ -180,7 +180,7 @@ def update_ram_panel(
 
 After the existing toggle button box, append the three panels:
 ```python
-from ten_ram_window import create_ram_panels
+from _10_ram_window import create_ram_panels
 # ... after box.append(overlay_btn) ...
 panels = create_ram_panels()
 for p in panels:
@@ -191,9 +191,9 @@ for p in panels:
 
 After `win = create_window(app)`:
 ```python
-from eight_ram_sampler import start_ram_sampler
-from nine_ram_aggregator import get_average_ram, get_series
-from ten_ram_window import update_ram_panel
+from _08_ram_sampler import start_ram_sampler
+from _09_ram_aggregator import get_average_ram, get_series
+from _10_ram_window import update_ram_panel
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / "04_data"
@@ -201,7 +201,7 @@ DB_PATH = DATA_DIR / "ram_data.db"
 
 def _on_ram_sample(sample: dict, panels: tuple) -> None:
     """Schedule panel updates on GTK main thread."""
-    glib_idle_add(lambda: _refresh_panels(sample, panels))
+    GLib.idle_add(lambda: _refresh_panels(sample, panels))
 
 def _refresh_panels(sample, panels):
     seven = get_average_ram(DB_PATH, 7)
@@ -214,7 +214,6 @@ def _refresh_panels(sample, panels):
 
 t = start_ram_sampler(DB_PATH, lambda s: GLib.idle_add(_on_ram_sample, s, panels))
 t.daemon = True
-t.start()
 ```
 
 Also: load plugins after window creation, pass panels to plugin init.
@@ -239,7 +238,7 @@ def init(ctx: dict) -> dict:
 
 **Loader logic:**
 - Iterate `data_dir / "plugins"` for subdirectories
-- Try `import index` from each; skip if `index.py` missing or `init` not callable
+- Try `import plugin` from each; skip if `plugin.py` missing or `init` not callable
 - Catch all exceptions, log to stderr, never crash
 - Call `ctx["register_panel"](info["name"], info["panel"])` for each loaded plugin
 - Return list of loaded plugin info dicts
