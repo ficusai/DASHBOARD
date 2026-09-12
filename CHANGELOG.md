@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Transparent always-on-top TEST overlay window (`test_overlay.py`)
+- Toggle button in main window to show/hide the TEST overlay
+- Overlay is draggable by clicking and holding anywhere on it
+- Overlay stays above all other windows and skips taskbar/alt-tab
+
 ## [0.1.0] - 2026-09-12
 
 ### Added

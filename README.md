@@ -7,9 +7,20 @@ Minimal GTK 4 window application for Fedora Linux (GNOME / Wayland).
 - [x] Executable from desktop
 - [x] All files in `/home/ficus-pro/Documents/DASHBOARD/`
 - [x] Git local tracking
+- [x] Toggle button + transparent always-on-top TEST overlay
 - [ ] Publish to remote repository (later)
 - [ ] Add application icon
 - [ ] Add content / widgets (future phase)
+
+## Features
+
+### TEST Overlay
+A transparent, always-on-top floating window that can be toggled from the main window:
+- Click **"Toggle TEST Overlay"** in the main window to show/hide it.
+- The overlay displays only the text **"TEST"** in blue on a dark translucent background.
+- It stays above all other windows (`set_keep_above(True)`).
+- It is **draggable** — click and hold anywhere on the overlay to move it.
+- It skips the taskbar and alt-tab switcher for a true overlay feel.
 
 ## File‑Numbering Convention
 Folders and files are numbered `_00`–`_99` in **runtime / build order**:
