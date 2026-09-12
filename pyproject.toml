@@ -22,4 +22,4 @@ where = ["00_app"]
 
 [tool.pytest.ini_options]
 testpaths = ["09_tests"]
-env = ["QT_QPA_PLATFORM=offscreen"]
+addopts = "-v"
