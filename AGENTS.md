@@ -1,83 +1,142 @@
-# Ficus Multi-Repo Master Workspace — /home/ficus-pro/Documents
+# DASHBOARD — Agent Instructions
 
-This directory is the primary multi-repository workspace for `ficusai` projects. Each subfolder represents an independent Git repository connected to public GitHub remotes under the `ficusai` organization.
+## Project Identity
 
-> **PRIMARY CONFIGURATION SOURCE**: All workspace specifications, project paths, tech stacks, entry points, and rules are defined in machine-readable JSON at:
-> **`/home/ficus-pro/Documents/agents.json`**
-
----
-
-## Project Catalog
-
-| Project | Path | Branch | Remote | Description |
-|---------|------|--------|--------|-------------|
-| CLUSTER | `/home/ficus-pro/Documents/CLUSTER` | `CLUSTER-0.1v-linux-native` | `https://github.com/ficusai/CLUSTER.git` | Python cluster management tool |
-| GENERATOR | `/home/ficus-pro/Documents/GENERATOR` | `GENERATOR-0.1v-linux-native` | `https://github.com/ficusai/GENERATOR.git` | Prompt generator application |
-| RSS | `/home/ficus-pro/Documents/RSS` | `RSS-0.1v-linux-native` | `https://github.com/ficusai/RSS.git` | RSS feed scraper and reader |
-| SCRIPT | `/home/ficus-pro/Documents/SCRIPT` | `SCRIPT-0.1v-linux-native` | `https://github.com/ficusai/SCRIPT.git` | OpenCode script extractor |
-| TRIP | `/home/ficus-pro/Documents/TRIP` | `TRIP-0.1v-linux-native` | `https://github.com/ficusai/TRIP.git` | TypeScript travel planner |
-| PROGRESS | `/home/ficus-pro/Documents/PROGRESS` | `PROGRESS-0.1v-linux-native` | `https://github.com/ficusai/PROGRESS.git` | Session progress tracker |
-| **DASHBOARD** | `/home/ficus-pro/Documents/DASHBOARD` | `DASHBOARD-0.1v-linux-native` | `https://github.com/ficusai/DASHBOARD.git` | Minimal GTK4 dashboard application |
+| Field | Value |
+|-------|-------|
+| **Path** | `/home/ficus-pro/Documents/DASHBOARD` |
+| **Branch** | `DASHBOARD-0.1v-linux-native` |
+| **Remote** | `https://github.com/ficusai/DASHBOARD.git` |
+| **License** | GPL-3.0-or-later |
+| **Stack** | Python 3.11+, PyGObject, GTK4, PyInstaller, Flatpak |
+| **Entry Point** | `00_app/00_main.py` |
 
 ---
 
-## 1. Autonomous Execution Protocol & Mandatory TODO Checklist
+## File Numbering Convention
 
-When an AI agent is requested to work on any custom project in this workspace, it MUST operate with **100% full autonomy** according to the following mandatory execution pipeline:
+All files are numbered `_00`–`_99` reflecting **runtime and build sequence**:
 
-1. **Context Ingestion**: Read `/home/ficus-pro/Documents/agents.json`, project `README.md`, and source code architecture before editing any files.
-2. **TODO List Tracking**: Maintain an active task list (`todowrite`) covering research, branch creation, implementation, testing, local commits, and remote publishing.
-3. **Autonomous Feature Branching**: Create a dedicated local feature branch (`git checkout -b feature/<feature-name>`) automatically without waiting for explicit prompt instructions.
-4. **Idiomatic Implementation**: Modify code adhering strictly to existing project conventions, formatting, type hints, and architecture patterns.
-5. **Self-Verification Loop**: Run automated tests, linters, syntax checks, or build commands (`pytest`, `python3 run_tests.py`, `npx tsc --noEmit`, `npm run build`) before completing any step.
-6. **Automatic Local Commits**: Stage and commit all edits locally to Git with clear, concise commit messages (`git add . && git commit -m "feat: ..."`).
-7. **Remote Branch Publishing**: Push local feature commits to remote GitHub (`git push -u origin feature/<feature-name>`).
-8. **Release Merge**: Merge verified feature branches into `<PROJECT>-0.1v-linux-native` and push the updated release branch to remote GitHub.
-9. **Documentation Sync**: Update project `README.md` and `agents.json` if entry points, dependencies, or configuration schemas were modified.
-10. **Mandatory Branch File Documentation**: Every feature branch MUST record ALL branch-related file changes in the project's public `README.md` **before** the branch is pushed to remote GitHub. Add/refresh a `## Branch-Related File Changes` subsection under the `## Git & Release Branching` section listing every file added or modified by the feature branch, with a one-line description of each change. Update the branch map table, and **remove any branch entries that are NOT actually implemented/pushed** (do not document planned or draft branches). Never skip this step — it is what keeps the public repo README in sync so future feature sessions work without user prompting.
+| Prefix | Purpose | Sequence |
+|--------|---------|----------|
+| `00_` | Application source (runtime) | `_00` = entry, `_99` = quit/close |
+| `01_` | Build & packaging | Last manual step |
+| `02_` | Desktop integration | Post-build install |
+| `03_` | Git helpers | Repo setup |
+| `04_` | AppStream & metadata | Software center config |
+| `05_` | Application icons | Visual assets |
+| `06_` | Flatpak packaging | Distribution manifest |
+| `07_` | CI/CD | Automated releases |
+| `08_` | Legal & licensing | Version & license files |
+| `09_` | Tests | Validation suite |
 
----
-
-## 2. System Environment State & Confidentiality
-* **System Environment**:
-  * Trading Engine Root: `/home/ficus-pro/Documents/TRADING`
-  * Local .NET SDK Root: `/home/ficus-pro/Documents/TRADING/.dotnet`
-  * PythonNet DLL: `/home/ficus-pro/Documents/TRADING/miniconda3/envs/qc_lean/lib/libpython3.11.so`
-  * OmniRoute Integration: `http://localhost:20128/v1` (Daemon data dir: `/home/ficus-pro/.omniroute`)
-  * Obsidian Knowledge Vaults: `/home/ficus-pro/Desktop/BARDAKAS/BRAIN_V2/` and `/home/ficus-pro/Desktop/BARDAKAS/OBSIDIAN-VAULTS/KNOWLEDGEV3/`
-* **Confidentiality & Local Isolation**:
-  * `/home/ficus-pro/Documents/agents.json` and `/home/ficus-pro/Documents/AGENTS.md` preserve local system state and are explicitly ignored in `/home/ficus-pro/Documents/.gitignore`. They must NEVER be committed to any public Git repository.
+**Rule:** `_00` is always the first thing executed at runtime. `_99` (or equivalent) is always the last — application quit or shutdown handler.
 
 ---
 
-## 3. Dynamic New Project Auto-Onboarding Protocol
-Whenever a NEW project directory is added under `/home/ficus-pro/Documents/<NEW_PROJECT>`, AI agents MUST automatically execute the following 8-step onboarding procedure:
+## Directory Map
 
-1. **Git Initialization**: Run `git init` inside `/home/ficus-pro/Documents/<NEW_PROJECT>` if it is not already a Git repository.
-2. **Branch Standardization**: Set primary branch to `<NEW_PROJECT>-0.1v-linux-native` (`git checkout -b <NEW_PROJECT>-0.1v-linux-native`).
-3. **GitHub Remote Setup**: Set remote origin to `https://github.com/ficusai/<NEW_PROJECT>.git`.
-4. **JSON Config Indexing**: Append a new project object to `/home/ficus-pro/Documents/agents.json` conforming 100% to the uniform schema (`id`, `name`, `path`, `branch`, `remote`, `description`, `tech_stack`, `entry_points`, `commands`, `ports`, `directories`).
-5. **Master Index Update**: Update `/home/ficus-pro/Documents/AGENTS.md` to include the new project in the project catalog.
-6. **Standardized Documentation**: Generate a complete 9-section `README.md` in `/home/ficus-pro/Documents/<NEW_PROJECT>/README.md`.
-7. **Agent Redirect**: Create `/home/ficus-pro/Documents/<NEW_PROJECT>/AGENTS.md` pointing to master `/home/ficus-pro/Documents/AGENTS.md`.
-8. **Git Commit & Publish**: Commit local metadata and push the release branch to remote GitHub (`git push -u origin <NEW_PROJECT>-0.1v-linux-native`).
-
----
-
-## 4. Code Organization Standards
-
-When writing any new function or code to any codebase in this workspace:
-* **One file per function**: Every new function MUST be placed in its own dedicated file.
-* **Dedicated folders**: Each function's file must reside in a purpose-built directory specific to that function's responsibility.
-* **No grouping in shared files**: Functions must not be grouped into shared or utility files; each function gets its own standalone file within its dedicated folder.
+| Folder | Contents |
+|--------|----------|
+| `00_app/` | Source code — one file per function, atomic design |
+| `01_build/` | PyInstaller spec, requirements, build script |
+| `02_desktop/` | `.desktop` launcher file |
+| `03_git/` | Git initialization script |
+| `04_data/` | AppStream metainfo, desktop entry (installed copy) |
+| `05_icons/` | Hicolor icon theme at 16/32/48/64/128/256 px |
+| `06_flatpak/` | Flatpak manifest (`*.yml`) |
+| `07_ci/` | GitHub Actions workflow |
+| `08_legal/` | LICENSE text, VERSION file |
+| `09_tests/` | pytest test suite |
 
 ---
 
-## 5. Uniform Project Catalog
+## Atomic Source Files — Hard Rule
 
-All project definitions in `agents.json` share a 100% uniform schema:
-* `id`, `name`, `path`, `branch`, `remote`, `description`, `tech_stack`
-* `entry_points` (`main`, `cli`, `gui`, `launcher`)
-* `commands` (`dev`, `build`, `test`, `compile`, `clean`)
-* `ports` (`primary`, `secondary`)
-* `directories` (`source`, `tests`, `assets`, `docs`)
+**Every new function MUST go in its own dedicated file inside its own folder.**
+
+- No grouping functions into shared or utility files.
+- No multi-function modules.
+- Each function = one file, one purpose-built directory.
+- Applies to `00_app/` and any new source directories created during development.
+
+---
+
+## Code Conventions
+
+- **License header** on every file:
+  ```python
+  # SPDX-License-Identifier: GPL-3.0-or-later
+  # Copyright (C) 2026 ficus-pro
+  ```
+- **GTK4 / PyGObject only** — no Tkinter, no PyQt, no PySide.
+- **Type hints** required on all function signatures.
+- **PEP 8** — follow standard Python formatting.
+- **Numeric module names** (`00_main.py`, `01_window.py`) — use `importlib.import_module()` in tests, never `from _00_main import ...`.
+- **No external dependencies** beyond `PyGObject>=3.44` unless explicitly approved.
+
+---
+
+## Commands
+
+```bash
+# Run application (dev)
+python3 00_app/00_main.py
+
+# Run tests
+QT_QPA_PLATFORM=offscreen PYTHONPATH=00_app pytest 09_tests/ -v
+
+# Compile / syntax check
+python3 -m py_compile 00_app/**/*.py
+
+# Build standalone executable
+bash 01_build/01_build_executable.sh
+
+# Clean build artefacts
+rm -rf dist/ build/ __pycache__ .pytest_cache
+```
+
+---
+
+## Git Workflow
+
+```bash
+# Feature branch (always create before editing)
+git checkout -b feature/<feature-name>
+
+# After each logical change
+git add . && git commit -m "feat: <description>"
+
+# Push feature branch
+git push -u origin feature/<feature-name>
+
+# Merge to release branch
+git checkout DASHBOARD-0.1v-linux-native
+git merge feature/<feature-name>
+git push origin DASHBOARD-0.1v-linux-native
+```
+
+**Commit convention:** `feat:`, `fix:`, `docs:`, `chore:` (Conventional Commits).
+
+**Branch documentation rule:** Before pushing any feature branch, update `README.md` with a `## Branch-Related File Changes` section listing every file added or modified.
+
+---
+
+## Restrictions
+
+- **Never** commit `agents.json` or the master `AGENTS.md` — these belong to the parent workspace.
+- **Never** modify `08_legal/01_VERSION` manually without a semantic version decision (MAJOR.MINOR.PATCH).
+- **Never** install or reference packages from outside the Fedora repos or `pyproject.toml` dependencies.
+- **Never** hard-code absolute paths in source code — use `pathlib.Path` relative to `__file__`.
+- **Never** remove or rename numbered files in `00_app/` — the numbering encodes runtime order.
+- **Always** run tests (`pytest`) before committing.
+- **Always** update `CHANGELOG.md` for any user-facing change.
+
+---
+
+## Current State
+
+- Version: `0.1.0`
+- Status: Minimal empty window with system close button
+- Remote: Not yet published (repository must be created on GitHub first)
+- Tests: 2 passing (`test_window_creation`, `test_main_module_exists`)
