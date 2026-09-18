@@ -16,6 +16,7 @@ Usage:
 """
 
 import argparse
+import os
 import socket
 import sys
 from pathlib import Path
@@ -27,6 +28,14 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+# GNOME/Mutter on Wayland ignores WindowStaysOnTopHint and client-side
+# window moves for native Wayland surfaces.  Running the overlay through
+# XWayland (xcb) makes the compositor honour _NET_WM_STATE_ABOVE and system
+# moves instead, so the overlay stays on top like a notification and can be
+# repositioned by the user.  Honoured as a default only: an explicitly set
+# QT_QPA_PLATFORM is respected.
+os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
 
 SOCKET_PATH = Path.home() / ".local" / "share" / "dashboard-overlay.sock"
 
@@ -103,14 +112,29 @@ class DraggableOverlay(QWidget):
             event.accept()
 
     def mouseMoveEvent(self, event) -> None:
-        if self._is_dragging and self._drag_offset is not None:
-            if event.buttons() & Qt.MouseButton.LeftButton:
-                self.move(event.globalPosition().toPoint() - self._drag_offset)
-                event.accept()
-                return
+        if not self._is_dragging or self._drag_offset is None:
+            return
+        if not (event.buttons() & Qt.MouseButton.LeftButton):
             self._is_dragging = False
             self._drag_offset = None
             event.accept()
+            return
+        # Prefer the window-system move (compositor-driven): works on both
+        # X11/XWayland (_NET_WM_MOVERESIZE) and Wayland (xdg move), and is the
+        # only way to reposition a window on Wayland.  Falls back to a manual
+        # move otherwise.
+        handle = self.windowHandle()
+        if handle is not None:
+            try:
+                if handle.startSystemMove():
+                    self._is_dragging = False
+                    self._drag_offset = None
+                    event.accept()
+                    return
+            except Exception:
+                pass
+        self.move(event.globalPosition().toPoint() - self._drag_offset)
+        event.accept()
 
     def mouseReleaseEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
