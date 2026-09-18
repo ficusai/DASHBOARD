@@ -14,6 +14,18 @@ venv/
 .vscode/
 .idea/
 
+# Feature-branch scratch dirs (kept on disk, NOT pushed to GitHub)
+# These were untracked working-directory noise in this clone.
+feature-refine/
+feature-dashboard-ram-monitor/
+
+# Was tracked, now intentionally dropped from the repo (kept on disk).
+# Re-added to .gitignore so it never gets re-committed. The unignore
+# below only re-enables the icon convenience-copy, not the JSON archive.
+NEW-BRANCH-FEAT-PROJECTS-TRACKING.json
+PROGRESS archive/
+feature-JOBS/
+
 # Fedora / GNOME
 *.desktop.bak
 # Keep repo-generated icon artwork; the unignore must re-include
