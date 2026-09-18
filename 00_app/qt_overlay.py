@@ -43,7 +43,7 @@ import socket
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import QSocketNotifier, Qt
+from PyQt6.QtCore import QPoint, QSocketNotifier, Qt
 from PyQt6.QtWidgets import (
     QApplication,
     QLabel,
@@ -129,10 +129,9 @@ class DraggableOverlay(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(label)
 
-        self._drag_offset: "QPoint | None" = None
+        self._drag_offset: QPoint | None = None
         self._is_dragging = False
 
-        screen = QApplication.primaryScreen().availableGeometry()
         self.move(24, 24 + self.height())
 
     # >>>> DRAGGING (do not remove) <<<<

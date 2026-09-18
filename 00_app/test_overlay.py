@@ -57,17 +57,6 @@ def hide_overlay() -> None:
     _run_overlay(["--hide"])
 
 
-def toggle_overlay() -> bool:
-    """
-    Toggle the overlay visibility.
-
-    Returns:
-        True if the overlay is now visible, False otherwise.
-    """
-    _run_overlay(["--toggle"])
-    return is_overlay_visible()
-
-
 def is_overlay_visible(max_wait: float = 3.0) -> bool:
     """Return True if the overlay is currently visible.
 

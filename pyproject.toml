@@ -19,7 +19,7 @@ dependencies = [
 dashboard = "00_app.00_main:main"
 
 [tool.setuptools]
-py-modules = ["00_app.00_main", "00_app.window", "00_app.test_overlay", "00_app.qt_overlay", "00_app.quit"]
+py-modules = ["00_app.00_main", "00_app.window", "00_app.test_overlay", "00_app.qt_overlay"]
 
 [tool.pytest.ini_options]
 testpaths = ["09_tests"]

@@ -4,11 +4,8 @@
 
 import importlib
 import os
-import subprocess
 import sys
 from pathlib import Path
-
-import pytest
 
 # Keep QApplication headless so the test never blocks connecting to the
 # desktop compositor (Wayland/X11) and works in CI.
