@@ -6,7 +6,7 @@ A small Linux desktop dashboard written in Python. The current application provi
 
 - GTK 4 application window titled **DASHBOARD**.
 - One-button overlay control: `Toggle TEST Overlay` / `Hide TEST Overlay`.
-- Frameless, opaque PyQt6 overlay displaying `TEST`.
+- Opaque PyQt6 overlay displaying `TEST`.
 - Overlay singleton controlled through a Unix domain socket at:
   `~/.local/share/dashboard-overlay.sock`.
 - Always-on-top overlay behavior using Qt's `WindowStaysOnTopHint` and XWayland (`QT_QPA_PLATFORM=xcb` by default).
