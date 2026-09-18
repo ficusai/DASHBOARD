@@ -16,8 +16,12 @@ venv/
 
 # Fedora / GNOME
 *.desktop.bak
+# Keep repo-generated icon artwork; the unignore must re-include
+# both the directory and everything inside it (files are still
+# matched by the "*.png" rule individually).
 *.png
 !05_icons/
+!05_icons/**
 
 # Runtime data
 04_data/ram_data.db

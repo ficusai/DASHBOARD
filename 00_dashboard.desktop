@@ -1,10 +1,22 @@
+# DASHBOARD launcher (portable template).
+#
+# .desktop files require absolute paths, so this template uses a single
+# @PROJECT_DIR@ placeholder. Install it for your user with:
+#
+#     ./install.sh                 # user mode (default, no root needed)
+#     sudo ./install.sh --system   # system-wide for all users
+#
+# That generates org.ficus.Dashboard.desktop with the correct paths and
+# registers it in your application menu, plus an optional desktop icon.
+# Running this template file directly will not work.
 [Desktop Entry]
 Type=Application
 Name=DASHBOARD
 Comment=Minimal dashboard application
-Exec=/usr/bin/python3 /home/ficus-pro/Documents/DASHBOARD/00_app/00_main.py
-Path=/home/ficus-pro/Documents/DASHBOARD/00_app
-Icon=/home/ficus-pro/Documents/DASHBOARD/05_icons/hicolor/256x256/apps/org.ficus.Dashboard.png
+TryExec=@PROJECT_DIR@/run-dashboard.sh
+Exec=@PROJECT_DIR@/run-dashboard.sh
+Path=@PROJECT_DIR@/00_app
+Icon=@PROJECT_DIR@/05_icons/hicolor/256x256/apps/org.ficus.Dashboard.png
 Terminal=false
 Categories=Utility;
 Keywords=dashboard;gtk;python;
