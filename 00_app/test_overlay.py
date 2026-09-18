@@ -10,6 +10,7 @@ that process via subprocess.
 
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 
@@ -64,13 +65,22 @@ def toggle_overlay() -> bool:
         True if the overlay is now visible, False otherwise.
     """
     _run_overlay(["--toggle"])
-    # Give the daemon a moment to start, then query state.
-    import time
-    time.sleep(0.3)
     return is_overlay_visible()
 
 
-def is_overlay_visible() -> bool:
-    """Return True if the overlay is currently visible."""
-    resp = _run_overlay(["--visible"])
-    return resp == "true"
+def is_overlay_visible(max_wait: float = 3.0) -> bool:
+    """Return True if the overlay is currently visible.
+
+    A freshly launched overlay daemon needs a moment to import PyQt6 and
+    bind its Unix socket, so transient connection failures are retried
+    (up to ``max_wait`` seconds) instead of being misread as "hidden".
+    """
+    deadline = time.monotonic() + max_wait
+    while True:
+        resp = _run_overlay(["--visible"])
+        if resp in ("true", "false"):
+            return resp == "true"
+        if time.monotonic() >= deadline:
+            break
+        time.sleep(0.05)
+    return False

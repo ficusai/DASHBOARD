@@ -3,11 +3,16 @@
 """Tests for the TEST overlay module and its subprocess-based overlay."""
 
 import importlib
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+
+# Keep QApplication headless so the test never blocks connecting to the
+# desktop compositor (Wayland/X11) and works in CI.
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "00_app"))
 

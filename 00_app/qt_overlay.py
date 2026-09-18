@@ -16,16 +16,14 @@ Usage:
 """
 
 import argparse
-import select
 import socket
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QSocketNotifier, Qt
 from PyQt6.QtWidgets import (
     QApplication,
     QLabel,
-    QPushButton,
     QVBoxLayout,
     QWidget,
 )
@@ -54,134 +52,141 @@ def _send_command(cmd: str) -> str | None:
         return None
 
 
+class DraggableOverlay(QWidget):
+    """Frameless, always-on-top, translucent overlay showing "TEST".
+
+    Subclassing QWidget is required: PyQt6 virtual method overrides are
+    only picked up from subclass methods, not from instance attributes
+    assigned after construction.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
+        self.setWindowFlags(
+            Qt.WindowType.Window
+            | Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.Tool
+        )
+        self.setFixedSize(140, 60)
+        self.setCursor(Qt.CursorShape.SizeAllCursor)
+        self.setStyleSheet("""
+            QWidget {
+                background-color: rgba(15, 23, 42, 180);
+            }
+            QLabel {
+                color: #60a5fa;
+                font-size: 28px;
+                font-weight: bold;
+                font-family: 'Segoe UI', Ubuntu, sans-serif;
+            }
+        """)
+
+        label = QLabel("TEST", self)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(label)
+
+        self._drag_offset: "QPoint | None" = None
+        self._is_dragging = False
+
+        screen = QApplication.primaryScreen().availableGeometry()
+        self.move(24, 24 + self.height())
+
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._is_dragging = True
+            self._drag_offset = event.globalPosition().toPoint() - self.pos()
+            event.accept()
+
+    def mouseMoveEvent(self, event) -> None:
+        if self._is_dragging and self._drag_offset is not None:
+            if event.buttons() & Qt.MouseButton.LeftButton:
+                self.move(event.globalPosition().toPoint() - self._drag_offset)
+                event.accept()
+                return
+            self._is_dragging = False
+            self._drag_offset = None
+            event.accept()
+
+    def mouseReleaseEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._is_dragging = False
+            self._drag_offset = None
+            event.accept()
+
+
 class OverlayApp:
-    """Singleton overlay window managed by a local Unix socket."""
+    """Singleton overlay daemon managed by a local Unix socket."""
 
     def __init__(self) -> None:
         self._app = QApplication([])
-        self._widget: QWidget | None = None
+        self._overlay = DraggableOverlay()
+
         self._server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self._server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        # Remove stale socket from previous run
+        # Remove stale socket from a previous run.
         if SOCKET_PATH.exists():
             SOCKET_PATH.unlink()
 
         self._server.bind(str(SOCKET_PATH))
-        self._server.listen(1)
+        self._server.listen(16)
         self._server.setblocking(False)
 
-    def _get_widget(self) -> QWidget:
-        if self._widget is None:
-            widget = QWidget()
-            widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
-            widget.setWindowFlags(
-                Qt.WindowType.Window
-                | Qt.WindowType.FramelessWindowHint
-                | Qt.WindowType.WindowStaysOnTopHint
-                | Qt.WindowType.Tool
-            )
-            widget.setFixedSize(140, 60)
-            widget.setCursor(Qt.CursorShape.SizeAllCursor)
-            widget.setStyleSheet("""
-                QWidget {
-                    background-color: rgba(15, 23, 42, 180);
-                }
-                QLabel {
-                    color: #60a5fa;
-                    font-size: 28px;
-                    font-weight: bold;
-                    font-family: 'Segoe UI', Ubuntu, sans-serif;
-                }
-            """)
-            label = QLabel("TEST", widget)
-            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lay = QVBoxLayout(widget)
-            lay.setContentsMargins(0, 0, 0, 0)
-            lay.addWidget(label)
+        self._notifier = QSocketNotifier(
+            self._server.fileno(), QSocketNotifier.Type.Read
+        )
+        self._notifier.activated.connect(self._on_socket_activated)
 
-            # Drag support
-            self._drag_offset = None
-            self._is_dragging = False
-
-            def mousePressEvent(event):
-                if event.button() == Qt.MouseButton.LeftButton:
-                    self._is_dragging = True
-                    self._drag_offset = event.globalPosition().toPoint() - widget.pos()
-                    event.accept()
-
-            def mouseMoveEvent(event):
-                if self._is_dragging and self._drag_offset is not None:
-                    if event.buttons() & Qt.MouseButton.LeftButton:
-                        widget.move(event.globalPosition().toPoint() - self._drag_offset)
-                        event.accept()
-                        return
-
-            def mouseReleaseEvent(event):
-                if event.button() == Qt.MouseButton.LeftButton:
-                    self._is_dragging = False
-                    self._drag_offset = None
-                    event.accept()
-
-            widget.mousePressEvent = mousePressEvent
-            widget.mouseMoveEvent = mouseMoveEvent
-            widget.mouseReleaseEvent = mouseReleaseEvent
-
-            # Position at top-left
-            screen = QApplication.primaryScreen().availableGeometry()
-            widget.move(24, 24 + widget.height())
-
-            self._widget = widget
-        return self._widget
+    def _on_socket_activated(self) -> None:
+        """Accept all pending connections and process their commands."""
+        while True:
+            try:
+                conn, _ = self._server.accept()
+            except (BlockingIOError, OSError):
+                break
+            with conn:
+                try:
+                    data = conn.recv(4096)
+                except (BlockingIOError, OSError):
+                    data = b""
+                if data:
+                    cmd = data.decode().strip()
+                    resp = self.handle_command(cmd)
+                    try:
+                        conn.sendall((resp + "\n").encode())
+                    except OSError:
+                        pass
 
     def handle_command(self, cmd: str) -> str:
         """Process a command and return the response."""
         if cmd == "show":
-            w = self._get_widget()
-            w.show()
-            w.raise_()
-            w.activateWindow()
+            self._overlay.show()
+            self._overlay.raise_()
+            self._overlay.activateWindow()
             return "shown"
         elif cmd == "hide":
-            w = self._get_widget()
-            if w is not None:
-                w.hide()
+            self._overlay.hide()
             return "hidden"
         elif cmd == "toggle":
-            w = self._get_widget()
-            if w is not None and w.isVisible():
-                w.hide()
+            if self._overlay.isVisible():
+                self._overlay.hide()
                 return "hidden"
-            else:
-                w = self._get_widget()
-                w.show()
-                w.raise_()
-                w.activateWindow()
-                return "shown"
+            self._overlay.show()
+            self._overlay.raise_()
+            self._overlay.activateWindow()
+            return "shown"
         elif cmd == "visible":
-            w = self._get_widget()
-            return "true" if (w is not None and w.isVisible()) else "false"
+            return "true" if self._overlay.isVisible() else "false"
         return "unknown command"
 
     def run(self) -> int:
-        """Run the overlay event loop, processing socket commands."""
-        while True:
-            # Check for incoming connections / data
-            readable, _, _ = select.select([self._server], [], [], 0.1)
-            if readable:
-                try:
-                    conn, _ = self._server.accept()
-                    with conn:
-                        data = conn.recv(4096)
-                        if data:
-                            cmd = data.decode().strip()
-                            resp = self.handle_command(cmd)
-                            conn.sendall((resp + "\n").encode())
-                except OSError:
-                    pass
-
-            # Process Qt events
-            QApplication.processEvents()
+        """Run the Qt event loop, processing socket commands as they arrive."""
+        return self._app.exec()
 
 
 def main() -> int:
@@ -199,7 +204,7 @@ def main() -> int:
         print(resp if resp is not None else "false")
         return 0
 
-    # Action commands: try existing instance first, fall back to starting one.
+    # Action commands: try the existing instance first, fall back to starting one.
     cmd = "show" if args.show else "hide" if args.hide else "toggle"
     resp = _send_command(cmd)
     if resp is not None:
