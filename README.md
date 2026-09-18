@@ -1,14 +1,12 @@
 # DASHBOARD
 
-A small Linux desktop dashboard written in Python. The current application provides a GTK 4 main window and a separate PyQt6-based `TEST` overlay that can be shown, hidden, toggled, and dragged while remaining above normal windows. The repository also includes Linux desktop integration, a user/system installer, Flatpak metadata, release automation, tests, and an experimental PostgreSQL-backed job/task schema for planned dashboard functionality.
-
-> **Current status:** The shipped UI is intentionally minimal. The project dashboard, queue, progress, Git branch, MCP-server, and related concepts are currently represented as design/project-tracking data rather than implemented screens in the GTK application.
+A small Linux desktop dashboard written in Python. The current application provides a GTK 4 main window and a separate PyQt6-based `TEST` overlay that can be shown, hidden, toggled, and dragged while remaining above normal windows. The repository also includes Linux desktop integration, a user/system installer, Flatpak metadata, release automation, tests, and an experimental PostgreSQL-backed job/task schema (STILL WORKING) for planned dashboard functionality.
 
 ## Features
 
 - GTK 4 application window titled **DASHBOARD**.
 - One-button overlay control: `Toggle TEST Overlay` / `Hide TEST Overlay`.
-- Frameless, translucent PyQt6 overlay displaying `TEST`.
+- Frameless, opaque PyQt6 overlay displaying `TEST`.
 - Overlay singleton controlled through a Unix domain socket at:
   `~/.local/share/dashboard-overlay.sock`.
 - Always-on-top overlay behavior using Qt's `WindowStaysOnTopHint` and XWayland (`QT_QPA_PLATFORM=xcb` by default).
