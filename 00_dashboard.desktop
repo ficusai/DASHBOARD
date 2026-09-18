@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=DASHBOARD
+Comment=Minimal dashboard application
+Exec=/usr/bin/python3 /home/ficus-pro/Documents/DASHBOARD/00_app/00_main.py
+Path=/home/ficus-pro/Documents/DASHBOARD/00_app
+Icon=/home/ficus-pro/Documents/DASHBOARD/05_icons/hicolor/256x256/apps/org.ficus.Dashboard.png
+Terminal=false
+Categories=Utility;
+Keywords=dashboard;gtk;python;
+StartupNotify=true
+X-GNOME-UsesNotifications=true
