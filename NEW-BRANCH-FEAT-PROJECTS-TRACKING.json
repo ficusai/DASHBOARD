@@ -1,0 +1,115 @@
+{
+  "application": {
+    "name": "Project Dashboard",
+    "platform": "Linux Fedora",
+    "singleWindow": true,
+    "window": {
+      "title": "Project Dashboard",
+      "layout": "vertical",
+      "sections": [
+        {
+          "id": "projectDetails",
+          "title": "Project Details",
+          "fields": [
+            {
+              "id": "projectName",
+              "label": "Project Name",
+              "value": null,
+              "dataMode": "static",
+              "setup": "one-time",
+              "editable": false,
+              "initializedOnce": true
+            },
+            {
+              "id": "projectIdea",
+              "label": "Project Idea",
+              "value": null,
+              "dataMode": "static+dynamic",
+              "dynamicBehavior": "new ideas can be added over time",
+              "editable": true
+            },
+            {
+              "id": "projectIntension",
+              "label": "Project Intension",
+              "value": null,
+              "dataMode": "static",
+              "setup": "one-time",
+              "editable": false,
+              "initializedOnce": true
+            },
+            {
+              "id": "projectMission",
+              "label": "Project Mission",
+              "value": null,
+              "dataMode": "static",
+              "setup": "one-time",
+              "editable": false,
+              "initializedOnce": true
+            },
+            {
+              "id": "projectDependencies",
+              "label": "Project Dependencies",
+              "value": [],
+              "dataMode": "manual",
+              "inputType": "manual-input",
+              "editable": true
+            },
+            {
+              "id": "projectMcpServers",
+              "label": "Project MCP Servers",
+              "value": [],
+              "dataMode": "dynamic",
+              "editable": false,
+              "autoUpdate": true
+            },
+            {
+              "id": "projectOtherServers",
+              "label": "Project Other Servers Connected For It",
+              "value": [],
+              "dataMode": "manual",
+              "inputType": "manual-input",
+              "editable": true
+            },
+            {
+              "id": "projectGitBranches",
+              "label": "Project Git Branches",
+              "value": [],
+              "dataMode": "dynamic",
+              "liveUpdate": true,
+              "respectRateLimits": true,
+              "editable": false
+            }
+          ]
+        },
+        {
+          "id": "queue",
+          "title": "Queue",
+          "mechanism": "predetermined by queue mechanism",
+          "items": [
+            {
+              "id": 1,
+              "source": "Opencode",
+              "task": "show something"
+            },
+            {
+              "id": 2,
+              "source": "Ollama LLM Embedding model",
+              "task": "find this value XYZ"
+            }
+          ]
+        },
+        {
+          "id": "progress",
+          "title": "Progress",
+          "progressBar": {
+            "display": "|====|",
+            "calculation": "calculates queue number",
+            "secondsPerQueueItem": 10,
+            "purpose": "completion calculations",
+            "completionEstimateFormula": "queueNumber * secondsPerQueueItem"
+          }
+        }
+      ]
+    }
+  }
+}
