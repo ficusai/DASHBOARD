@@ -13,6 +13,28 @@ Usage:
     python3 qt_overlay.py --hide     # Hide the overlay
     python3 qt_overlay.py --toggle   # Toggle visibility
     python3 qt_overlay.py --visible  # Print "true" or "false" to stdout
+
+Behaviour and the exact code behind it (tested on GNOME/Wayland):
+
+1. STAYS ON TOP OF ALL WINDOWS (like a notification):
+   - `os.environ.setdefault("QT_QPA_PLATFORM", "xcb")` near the top of this
+     module forces Qt to draw the overlay through XWayland.  Native Wayland
+     surfaces cannot ask the compositor to stay on top, so on Wayland the
+     overlay would sink under other windows.
+   - As an X11/XWayland window the compositor honours
+     `Qt.WindowType.WindowStaysOnTopHint` (set in DraggableOverlay.__init__),
+     which becomes _NET_WM_STATE_ABOVE and keeps the overlay pinned above
+     normal windows.
+
+2. DRAGGABLE BY MOUSE:
+   - DraggableOverlay subclasses QWidget and overrides mousePressEvent /
+     mouseMoveEvent / mouseReleaseEvent.  These are C++ virtual methods, so
+     the overrides only work on a subclass — plain instance attributes are
+     silently ignored by PyQt6 (this was the original "not draggable" bug).
+   - mouseMoveEvent calls `self.windowHandle().startSystemMove()`, which
+     asks the window manager / compositor to move the window with the cursor
+     (the only way to reposition a window on Wayland); otherwise it falls
+     back to a manual `self.move()`.
 """
 
 import argparse
@@ -29,11 +51,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-# GNOME/Mutter on Wayland ignores WindowStaysOnTopHint and client-side
-# window moves for native Wayland surfaces.  Running the overlay through
-# XWayland (xcb) makes the compositor honour _NET_WM_STATE_ABOVE and system
-# moves instead, so the overlay stays on top like a notification and can be
-# repositioned by the user.  Honoured as a default only: an explicitly set
+# >>>> ALWAYS-ON-TOP (do not remove) <<<<
+# CRITICAL: GNOME/Mutter on Wayland ignores WindowStaysOnTopHint and
+# client-side window moves for native Wayland surfaces.  Forcing Qt onto the
+# xcb (X11/XWayland) platform makes the compositor honour _NET_WM_STATE_ABOVE
+# and system moves instead, so the overlay stays on top like a notification
+# and can be repositioned by the user.  Deleting this line makes the overlay
+# sink under other windows again.  It is only a default: an explicitly set
 # QT_QPA_PLATFORM is respected.
 os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
 
@@ -72,6 +96,12 @@ class DraggableOverlay(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
+        # ALWAYS-ON-TOP WINDOW FLAGS.
+        # FramelessWindowHint removes the title bar, WindowStaysOnTopHint asks
+        # to stay above all windows (honoured because the overlay runs through
+        # XWayland — see the QT_QPA_PLATFORM line at the top of this file),
+        # Tool keeps it out of the taskbar / Alt-Tab.  Translucent background
+        # comes from the styled rgba() background below.
         self.setWindowFlags(
             Qt.WindowType.Window
             | Qt.WindowType.FramelessWindowHint
@@ -105,6 +135,10 @@ class DraggableOverlay(QWidget):
         screen = QApplication.primaryScreen().availableGeometry()
         self.move(24, 24 + self.height())
 
+    # >>>> DRAGGING (do not remove) <<<<
+    # These three overrides make the frameless window draggable by the mouse.
+    # They must live on a QWidget subclass: PyQt6 only honours virtual-method
+    # overrides defined on the class, never attributes assigned to an instance.
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
             self._is_dragging = True
@@ -119,10 +153,11 @@ class DraggableOverlay(QWidget):
             self._drag_offset = None
             event.accept()
             return
-        # Prefer the window-system move (compositor-driven): works on both
-        # X11/XWayland (_NET_WM_MOVERESIZE) and Wayland (xdg move), and is the
-        # only way to reposition a window on Wayland.  Falls back to a manual
-        # move otherwise.
+        # startSystemMove() = the key to dragging on Wayland: instead of the
+        # client trying to reposition the window (impossible on Wayland),
+        # ask the window manager / compositor to move it with the cursor.
+        # Works on X11/XWayland (_NET_WM_MOVERESIZE) and Wayland (xdg move);
+        # falls back to a manual move if the platform does not support it.
         handle = self.windowHandle()
         if handle is not None:
             try:
